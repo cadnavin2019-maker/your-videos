@@ -1,109 +1,6 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
-
-type Video = {
-  id: number;
-  title: string;
-  channel: string;
-  views: string;
-  time: string;
-  duration: string;
-  category: string;
-  thumbnail: string;
-};
-
-const videos: Video[] = [
-  {
-    id: 1,
-    title: "Welcome to Your Videos",
-    channel: "Your Videos",
-    views: "1.2K views",
-    time: "2 hours ago",
-    duration: "12:45",
-    category: "Featured",
-    thumbnail:
-      "https://images.unsplash.com/photo-1492724441997-5dc865305da7?w=1400",
-  },
-  {
-    id: 2,
-    title: "The Future of Technology",
-    channel: "Tech World",
-    views: "8.5K views",
-    time: "5 hours ago",
-    duration: "10:32",
-    category: "Technology",
-    thumbnail:
-      "https://images.unsplash.com/photo-1518770660439-4636190af475?w=1400",
-  },
-  {
-    id: 3,
-    title: "Beautiful Places Around the World",
-    channel: "Travel Vibes",
-    views: "24K views",
-    time: "1 day ago",
-    duration: "15:18",
-    category: "Travel",
-    thumbnail:
-      "https://images.unsplash.com/photo-1500534623283-312aade485b7?w=1400",
-  },
-  {
-    id: 4,
-    title: "The World of Gaming",
-    channel: "Game Zone",
-    views: "32K views",
-    time: "2 days ago",
-    duration: "18:42",
-    category: "Gaming",
-    thumbnail:
-      "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=1400",
-  },
-  {
-    id: 5,
-    title: "Music That Changes Everything",
-    channel: "Music Station",
-    views: "45K views",
-    time: "3 days ago",
-    duration: "25:10",
-    category: "Music",
-    thumbnail:
-      "https://images.unsplash.com/photo-1516280440614-37939bbacd81?w=1400",
-  },
-  {
-    id: 6,
-    title: "World News Today",
-    channel: "Daily News",
-    views: "19K views",
-    time: "4 days ago",
-    duration: "09:55",
-    category: "News",
-    thumbnail:
-      "https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=1400",
-  },
-  {
-    id: 7,
-    title: "Amazing Sports Moments",
-    channel: "Sports World",
-    views: "51K views",
-    time: "5 days ago",
-    duration: "11:27",
-    category: "Sports",
-    thumbnail:
-      "https://images.unsplash.com/photo-1461896836934-ffe607ba8211?w=1400",
-  },
-  {
-    id: 8,
-    title: "Explore Beautiful Nature",
-    channel: "Nature Life",
-    views: "15K views",
-    time: "1 week ago",
-    duration: "08:21",
-    category: "Travel",
-    thumbnail:
-      "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=1400",
-  },
-];
 
 const categories = [
   "All",
@@ -116,369 +13,213 @@ const categories = [
   "Travel",
 ];
 
+const videos = [
+  {
+    title: "Amazing Cinematic Journey",
+    category: "Travel",
+    duration: "08:42",
+    views: "12K views",
+  },
+  {
+    title: "Future Technology Explained",
+    category: "Technology",
+    duration: "12:18",
+    views: "8.4K views",
+  },
+  {
+    title: "Best Music Performance",
+    category: "Music",
+    duration: "05:36",
+    views: "24K views",
+  },
+  {
+    title: "Ultimate Gaming Experience",
+    category: "Gaming",
+    duration: "18:25",
+    views: "31K views",
+  },
+  {
+    title: "Latest Sports Highlights",
+    category: "Sports",
+    duration: "09:14",
+    views: "15K views",
+  },
+  {
+    title: "World News Today",
+    category: "News",
+    duration: "06:52",
+    views: "19K views",
+  },
+];
+
 export default function Home() {
-  const [search, setSearch] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("All");
-  const [menuOpen, setMenuOpen] = useState(false);
-
-  const filteredVideos = videos.filter((video) => {
-    const matchesSearch =
-      video.title.toLowerCase().includes(search.toLowerCase()) ||
-      video.channel.toLowerCase().includes(search.toLowerCase());
-
-    const matchesCategory =
-      selectedCategory === "All" ||
-      selectedCategory === "Trending" ||
-      video.category === selectedCategory;
-
-    return matchesSearch && matchesCategory;
-  });
-
   return (
-    <main className="min-h-screen bg-[#f4f8ff] text-slate-900">
+    <main className="min-h-screen bg-[#070b14] text-white">
+      {/* Header */}
+      <header className="border-b border-white/10 bg-[#070b14]/95">
+        <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-5">
+          <Link href="/" className="text-2xl font-bold tracking-tight">
+            Your <span className="text-red-500">Videos</span>
+          </Link>
 
-      {/* HEADER */}
+          <nav className="hidden gap-8 text-sm text-gray-300 md:flex">
+            <Link href="/" className="hover:text-white">
+              Home
+            </Link>
+            <Link href="/upload" className="hover:text-white">
+              Upload
+            </Link>
+          </nav>
 
-      <header className="premium-header sticky top-0 z-50">
-        <div className="mx-auto flex h-[76px] max-w-[1700px] items-center gap-4 px-5 lg:px-8">
-
-          <button
-            onClick={() => setMenuOpen(!menuOpen)}
-            className="menu-button lg:hidden"
+          <Link
+            href="/upload"
+            className="rounded-full bg-red-600 px-5 py-2.5 text-sm font-semibold hover:bg-red-500"
           >
-            ☰
-          </button>
-
-          {/* BRAND */}
-
-          <div className="brand flex items-center gap-3">
-
-            <div className="brand-logo">
-              <span>▶</span>
-            </div>
-
-            <div>
-              <div className="brand-name">
-                Your Videos
-              </div>
-
-              <div className="brand-tagline">
-                WATCH • DISCOVER • ENJOY
-              </div>
-            </div>
-
-          </div>
-
-          {/* SEARCH */}
-
-          <div className="mx-auto hidden w-full max-w-2xl md:block">
-
-            <div className="modern-search">
-
-              <span className="search-icon">
-                ⌕
-              </span>
-
-              <input
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search videos, creators and more..."
-              />
-
-              <button>
-                Search
-              </button>
-
-            </div>
-
-          </div>
-
-          {/* RIGHT */}
-
-          <div className="ml-auto flex items-center gap-2">
-
-            <button className="header-icon">
-              ♡
-            </button>
-
-            <button className="header-icon">
-              🔔
-            </button>
-
-            <button className="signin-button">
-              Sign In
-            </button>
-
-          </div>
-
+            Upload Video
+          </Link>
         </div>
       </header>
 
-      {/* MOBILE MENU */}
+      {/* Hero */}
+      <section className="mx-auto max-w-7xl px-6 py-20">
+        <div className="max-w-4xl">
+          <p className="mb-4 text-sm font-semibold uppercase tracking-[0.3em] text-red-500">
+            Your Video Platform
+          </p>
 
-      {menuOpen && (
-        <div className="mobile-menu">
+          <h1 className="text-5xl font-bold leading-tight md:text-7xl">
+            Watch.
+            <br />
+            Discover.
+            <br />
+            <span className="text-red-500">Share.</span>
+          </h1>
 
-          <button onClick={() => setMenuOpen(false)}>
-            ✕
-          </button>
+          <p className="mt-6 max-w-2xl text-lg leading-8 text-gray-400">
+            Discover amazing videos, explore new creators and share your
+            favorite moments with the world.
+          </p>
 
-          <div className="mobile-menu-title">
-            Your Videos
+          <div className="mt-8 flex flex-wrap gap-4">
+            <Link
+              href="/upload"
+              className="rounded-full bg-red-600 px-7 py-3 font-semibold hover:bg-red-500"
+            >
+              Upload Your Video
+            </Link>
+
+            <a
+              href="#videos"
+              className="rounded-full border border-white/20 px-7 py-3 font-semibold hover:bg-white/10"
+            >
+              Explore Videos
+            </a>
           </div>
-
-          <div className="mobile-links">
-            <button>⌂ Home</button>
-            <button>🔥 Trending</button>
-            <button>♡ Liked Videos</button>
-            <button>◷ Watch Later</button>
-            <button>▣ Subscriptions</button>
-          </div>
-
         </div>
-      )}
+      </section>
 
-      {/* CATEGORY BAR */}
-
-      <nav className="category-bar">
-
-        <div className="mx-auto flex max-w-[1700px] gap-3 overflow-x-auto px-5 py-4 lg:px-8">
-
-          {categories.map((category) => (
-
+      {/* Categories */}
+      <section className="mx-auto max-w-7xl px-6">
+        <div className="flex gap-3 overflow-x-auto pb-5">
+          {categories.map((category, index) => (
             <button
               key={category}
-              onClick={() => setSelectedCategory(category)}
-              className={
-                selectedCategory === category
-                  ? "category active"
-                  : "category"
-              }
+              className={`whitespace-nowrap rounded-full px-5 py-2 text-sm ${
+                index === 0
+                  ? "bg-white text-black"
+                  : "bg-white/10 text-gray-300 hover:bg-white/20"
+              }`}
             >
               {category}
             </button>
-
           ))}
+        </div>
+      </section>
 
+      {/* Videos */}
+      <section id="videos" className="mx-auto max-w-7xl px-6 py-10">
+        <div className="mb-8 flex items-end justify-between">
+          <div>
+            <p className="text-sm uppercase tracking-widest text-red-500">
+              Discover
+            </p>
+            <h2 className="mt-2 text-3xl font-bold">Featured Videos</h2>
+          </div>
         </div>
 
-      </nav>
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {videos.map((video) => (
+            <Link
+              href="/watch/id"
+              key={video.title}
+              className="group overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03] transition hover:-translate-y-1 hover:border-white/20"
+            >
+              {/* Thumbnail */}
+              <div className="relative aspect-video bg-gradient-to-br from-gray-800 via-gray-900 to-black">
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="flex h-14 w-14 items-center justify-center rounded-full bg-white/10 backdrop-blur">
+                    <span className="ml-1 text-xl">▶</span>
+                  </div>
+                </div>
 
-      {/* HERO */}
-
-      <section className="mx-auto max-w-[1700px] px-5 pt-7 lg:px-8">
-
-        <div className="premium-hero">
-
-          <div className="hero-glow hero-glow-one" />
-          <div className="hero-glow hero-glow-two" />
-
-          <div className="hero-content">
-
-            <div className="hero-badge">
-              ✦ THE NEW WAY TO WATCH
-            </div>
-
-            <h1>
-              Your world.
-              <br />
-
-              <span>One video at a time.</span>
-            </h1>
-
-            <p>
-              Discover inspiring creators, entertainment,
-              technology, music and stories — all in one beautiful place.
-            </p>
-
-            <div className="hero-buttons">
-
-              <button className="primary-button">
-                ▶ Explore Videos
-              </button>
-
-              <button className="secondary-button">
-                ✦ Trending Now
-              </button>
-
-            </div>
-
-          </div>
-
-          {/* HERO VISUAL */}
-
-          <div className="hero-visual">
-
-            <div className="floating-card card-one">
-              ▶
-            </div>
-
-            <div className="floating-card card-two">
-              ♫
-            </div>
-
-            <div className="floating-card card-three">
-              ✦
-            </div>
-
-            <div className="hero-circle">
-
-              <div className="hero-play">
-                ▶
+                <div className="absolute bottom-3 right-3 rounded bg-black/80 px-2 py-1 text-xs">
+                  {video.duration}
+                </div>
               </div>
 
-            </div>
+              {/* Info */}
+              <div className="p-5">
+                <p className="text-xs font-semibold uppercase tracking-wider text-red-500">
+                  {video.category}
+                </p>
 
-          </div>
+                <h3 className="mt-2 text-lg font-semibold group-hover:text-red-400">
+                  {video.title}
+                </h3>
 
+                <p className="mt-2 text-sm text-gray-500">
+                  {video.views}
+                </p>
+              </div>
+            </Link>
+          ))}
         </div>
-
       </section>
 
-      {/* CONTENT */}
+      {/* Creator CTA */}
+      <section className="mx-auto max-w-7xl px-6 py-20">
+        <div className="rounded-3xl border border-white/10 bg-gradient-to-r from-red-950/40 to-white/[0.03] p-10 text-center">
+          <h2 className="text-3xl font-bold">Have a video to share?</h2>
 
-      <section className="mx-auto max-w-[1700px] px-5 py-12 lg:px-8">
+          <p className="mx-auto mt-4 max-w-xl text-gray-400">
+            Upload your videos and start building your audience on Your
+            Videos.
+          </p>
 
-        <div className="section-heading">
-
-          <div>
-            <div className="section-label">
-              FOR YOU
-            </div>
-
-            <h2>
-              Discover something amazing
-            </h2>
-
-            <p>
-              Videos selected for your experience
-            </p>
-          </div>
-
-          <div className="video-count">
-            {filteredVideos.length} videos
-          </div>
-
+          <Link
+            href="/upload"
+            className="mt-7 inline-block rounded-full bg-red-600 px-7 py-3 font-semibold hover:bg-red-500"
+          >
+            Start Uploading
+          </Link>
         </div>
-
-        {/* VIDEO GRID */}
-
-        {filteredVideos.length === 0 ? (
-
-          <div className="empty-state">
-            <div>⌕</div>
-
-            <h3>
-              No videos found
-            </h3>
-
-            <p>
-              Try another search or category.
-            </p>
-          </div>
-
-        ) : (
-
-          <div className="video-grid">
-
-            {filteredVideos.map((video) => (
-
-              <article
-                key={video.id}
-                className="video-card"
-              >
-
-                {/* THUMBNAIL */}
-
-                <div className="thumbnail-wrapper">
-
-                  <img
-                    src={video.thumbnail}
-                    alt={video.title}
-                  />
-
-                  <div className="thumbnail-overlay" />
-
-                  <div className="play-circle">
-                    ▶
-                  </div>
-
-                  <span className="duration">
-                    {video.duration}
-                  </span>
-
-                  <span className="category-label">
-                    {video.category}
-                  </span>
-
-                </div>
-
-                {/* INFO */}
-
-                <div className="video-info">
-
-                  <div className="channel-avatar">
-                    {video.channel.charAt(0)}
-                  </div>
-
-                  <div className="video-text">
-
-                    <h3>
-                      {video.title}
-                    </h3>
-
-                    <p className="channel-name">
-                      {video.channel}
-                    </p>
-
-                    <p className="video-meta">
-                      {video.views} · {video.time}
-                    </p>
-
-                  </div>
-
-                  <button className="more-button">
-                    ⋮
-                  </button>
-
-                </div>
-
-              </article>
-
-            ))}
-
-          </div>
-
-        )}
-
       </section>
 
-      {/* FOOTER */}
+      {/* Footer */}
+      <footer className="border-t border-white/10 px-6 py-8">
+        <div className="mx-auto flex max-w-7xl flex-col justify-between gap-4 text-sm text-gray-500 md:flex-row">
+          <p>© 2026 Your Videos. All rights reserved.</p>
 
-      <footer className="premium-footer">
-
-        <div className="footer-logo">
-          ▶ Your Videos
+          <div className="flex gap-6">
+            <Link href="/" className="hover:text-white">
+              Home
+            </Link>
+            <Link href="/upload" className="hover:text-white">
+              Upload
+            </Link>
+          </div>
         </div>
-
-        <p>
-          A new home for videos, creators and stories.
-        </p>
-
-        <div className="footer-links">
-          <span>About</span>
-          <span>Creators</span>
-          <span>Privacy</span>
-          <span>Terms</span>
-          <span>Contact</span>
-        </div>
-
-        <div className="copyright">
-          © 2026 Your Videos
-        </div>
-
       </footer>
-
     </main>
   );
 }

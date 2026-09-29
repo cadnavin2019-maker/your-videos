@@ -1,78 +1,35 @@
-import { NextRequest, NextResponse } from "next/server";
-import { mkdir, writeFile } from "fs/promises";
-import path from "path";
-import crypto from "crypto";
+import { handleUpload, type HandleUploadBody } from "@vercel/blob/client";
+import { NextResponse } from "next/server";
 
-export const runtime = "nodejs";
-
-export async function POST(request: NextRequest) {
+export async function POST(request: Request) {
   try {
-    const formData = await request.formData();
+    const body = (await request.json()) as HandleUploadBody;
 
-    const video = formData.get("video");
-
-    if (!(video instanceof File)) {
-      return NextResponse.json(
-        { error: "No video file received." },
-        { status: 400 }
-      );
-    }
-
-    const bytes = await video.arrayBuffer();
-    const buffer = Buffer.from(bytes);
-
-    const uploadDirectory = path.join(
-      process.cwd(),
-      "public",
-      "uploads"
-    );
-
-    await mkdir(uploadDirectory, {
-      recursive: true,
+    const jsonResponse = await handleUpload({
+      body,
+      request,
+      token: process.env.BLOB_STORE_ID_READ_WRITE_TOKEN,
+      onBeforeGenerateToken: async () => {
+        return {
+          allowedContentTypes: ["video/*"],
+          maximumSizeInBytes: 5 * 1024 * 1024 * 1024,
+        };
+      },
+      onUploadCompleted: async () => {
+        console.log("Video upload completed");
+      },
     });
 
-    const extension =
-      path.extname(video.name) || ".mp4";
-
-    const safeExtension =
-      extension
-        .toLowerCase()
-        .replace(/[^a-z0-9.]/g, "");
-
-    const fileName =
-      `${crypto.randomUUID()}${safeExtension}`;
-
-    const filePath = path.join(
-      uploadDirectory,
-      fileName
-    );
-
-    await writeFile(filePath, buffer);
-
-    const videoUrl =
-      `/uploads/${fileName}`;
-
-    return NextResponse.json({
-      success: true,
-      message: "Video uploaded successfully.",
-      videoUrl,
-      fileName,
-      originalName: video.name,
-      size: video.size,
-      type: video.type,
-    });
-
+    return NextResponse.json(jsonResponse);
   } catch (error) {
-
-    console.error(
-      "UPLOAD ERROR:",
-      error
-    );
+    console.error("BLOB UPLOAD ERROR:", error);
 
     return NextResponse.json(
       {
-        success: false,
-        error: "Video upload failed.",
+        error:
+          error instanceof Error
+            ? error.message
+            : "Upload failed.",
       },
       { status: 500 }
     );
