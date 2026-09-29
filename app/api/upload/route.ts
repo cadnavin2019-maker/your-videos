@@ -8,7 +8,7 @@ export async function POST(request: Request) {
     const jsonResponse = await handleUpload({
       body,
       request,
-      token: process.env.BLOB_STORE_ID_READ_WRITE_TOKEN,
+      token: process.env.BLOB_READ_WRITE_TOKEN,
       onBeforeGenerateToken: async () => {
         return {
           allowedContentTypes: ["video/*"],
