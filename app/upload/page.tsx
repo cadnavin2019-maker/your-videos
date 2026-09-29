@@ -5,60 +5,67 @@ import Link from "next/link";
 import { upload } from "@vercel/blob/client";
 
 export default function UploadPage() {
-  const [videoName, setVideoName] = useState("");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState("");
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [category, setCategory] = useState("Entertainment");
-  const [videoPreview, setVideoPreview] = useState("");
-  const [dragActive, setDragActive] = useState(false);
-  const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [isUploading, setIsUploading] = useState(false);
+  const [dragActive, setDragActive] = useState(false);
 
-  const handleVideo = (file: File | undefined) => {
-    if (!file) {
-      return;
-    }
-
+  const handleFile = (file: File) => {
     if (!file.type.startsWith("video/")) {
       alert("Please select a video file.");
       return;
     }
 
-    setVideoName(file.name);
     setSelectedFile(file);
-    setUploadProgress(0);
 
-    if (videoPreview) {
-      URL.revokeObjectURL(videoPreview);
+    if (previewUrl) {
+      URL.revokeObjectURL(previewUrl);
     }
 
-    const previewUrl = URL.createObjectURL(file);
-    setVideoPreview(previewUrl);
+    const url = URL.createObjectURL(file);
+    setPreviewUrl(url);
+    setUploadProgress(0);
   };
 
-  const handleVideoChange = (
+  const handleFileChange = (
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
     const file = event.target.files?.[0];
-    handleVideo(file);
+
+    if (file) {
+      handleFile(file);
+    }
   };
 
   const handleDrop = (
-    event: React.DragEvent<HTMLLabelElement>
+    event: React.DragEvent<HTMLDivElement>
   ) => {
     event.preventDefault();
     setDragActive(false);
 
     const file = event.dataTransfer.files?.[0];
-    handleVideo(file);
+
+    if (file) {
+      handleFile(file);
+    }
   };
 
-  const handleSubmit = async (
-    event: React.FormEvent<HTMLFormElement>
+  const handleDragOver = (
+    event: React.DragEvent<HTMLDivElement>
   ) => {
     event.preventDefault();
+    setDragActive(true);
+  };
 
+  const handleDragLeave = () => {
+    setDragActive(false);
+  };
+
+  const handleUpload = async () => {
     if (!selectedFile) {
       alert("Please select a video first.");
       return;
@@ -69,20 +76,16 @@ export default function UploadPage() {
       return;
     }
 
+    if (!category) {
+      alert("Please select a category.");
+      return;
+    }
+
     try {
-      setUploading(true);
+      setIsUploading(true);
       setUploadProgress(0);
 
-      const safeFileName = selectedFile.name.replace(
-        /[^a-zA-Z0-9._-]/g,
-        "-"
-      );
-
-      const pathname =
-        "videos/" +
-        Date.now() +
-        "-" +
-        safeFileName;
+      const pathname = `videos/${Date.now()}-${selectedFile.name}`;
 
       const blob = await upload(
         pathname,
@@ -90,6 +93,7 @@ export default function UploadPage() {
         {
           access: "public",
           handleUploadUrl: "/api/upload",
+
           onUploadProgress: (progressEvent) => {
             setUploadProgress(
               Math.round(progressEvent.percentage)
@@ -98,301 +102,256 @@ export default function UploadPage() {
         }
       );
 
-      console.log("Video uploaded successfully:", {
-        url: blob.url,
-        pathname: blob.pathname,
-        title: title,
-        description: description,
-        category: category,
-      });
+      console.log("Blob upload successful:", blob);
+
+      const databaseResponse = await fetch(
+        "/api/videos",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            title: title.trim(),
+            description: description.trim(),
+            category: category,
+            video_url: blob.url,
+            pathname: blob.pathname,
+          }),
+        }
+      );
+
+      const databaseResult =
+        await databaseResponse.json();
+
+      if (!databaseResponse.ok) {
+        throw new Error(
+          databaseResult.error ||
+            "Video uploaded, but metadata could not be saved."
+        );
+      }
+
+      console.log(
+        "Video metadata saved:",
+        databaseResult
+      );
 
       setUploadProgress(100);
 
-      alert("Video uploaded successfully!");
+      alert(
+        "Video uploaded and saved successfully!"
+      );
 
-      console.log("Video URL:", blob.url);
+      setSelectedFile(null);
+      setPreviewUrl("");
+      setTitle("");
+      setDescription("");
+      setCategory("Entertainment");
+      setUploadProgress(0);
     } catch (error) {
-      console.error("Upload error:", error);
+      console.error("UPLOAD ERROR:", error);
 
-      if (error instanceof Error) {
-        alert(error.message);
-      } else {
-        alert("Video upload failed.");
-      }
+      alert(
+        error instanceof Error
+          ? error.message
+          : "Video upload failed."
+      );
     } finally {
-      setUploading(false);
+      setIsUploading(false);
     }
   };
 
   return (
-    <main className="min-h-screen bg-[#f5f9ff] text-slate-900">
-
-      <header className="sticky top-0 z-50 border-b border-blue-100 bg-white/90 backdrop-blur-xl">
-        <div className="mx-auto flex h-[78px] max-w-[1500px] items-center justify-between px-5 lg:px-8">
-
+    <main className="min-h-screen bg-black text-white">
+      <header className="border-b border-white/10 bg-black/90">
+        <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-5">
           <Link
             href="/"
-            className="flex items-center gap-3"
+            className="text-2xl font-bold tracking-tight"
           >
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-600 to-cyan-400 text-lg text-white shadow-lg">
-              ▶
-            </div>
-
-            <div>
-              <div className="text-xl font-black text-slate-950">
-                Your Videos
-              </div>
-
-              <div className="text-[8px] font-black uppercase tracking-[3px] text-blue-500">
-                Creator Studio
-              </div>
-            </div>
+            Your Videos
           </Link>
 
-          <Link
-            href="/"
-            className="rounded-full border border-slate-200 bg-white px-5 py-2.5 text-sm font-bold text-slate-600 hover:bg-blue-50 hover:text-blue-600"
-          >
-            ← Back to Home
-          </Link>
+          <nav className="flex items-center gap-6 text-sm">
+            <Link
+              href="/"
+              className="text-white/70 transition hover:text-white"
+            >
+              Home
+            </Link>
 
+            <Link
+              href="/upload"
+              className="rounded-full bg-white px-5 py-2 font-semibold text-black transition hover:bg-white/90"
+            >
+              Upload
+            </Link>
+          </nav>
         </div>
       </header>
 
-      <section className="relative overflow-hidden">
-        <div className="mx-auto max-w-[1050px] px-5 pb-10 pt-16 text-center">
-
-          <div className="mb-6 inline-flex rounded-full border border-blue-100 bg-white px-5 py-2 text-[11px] font-black uppercase tracking-[2px] text-blue-600 shadow-sm">
-            ✦ Your creative space ✦
-          </div>
-
-          <h1 className="text-5xl font-black tracking-[-2px] text-slate-950 md:text-7xl">
-            Share your
-            <span className="block bg-gradient-to-r from-blue-600 to-cyan-500 bg-clip-text text-transparent">
-              story with the world.
-            </span>
-          </h1>
-
-          <p className="mx-auto mt-6 max-w-2xl text-base font-medium leading-8 text-slate-500">
-            Upload your video, give it a voice, and let your creativity
-            reach people everywhere.
+      <section className="mx-auto max-w-5xl px-6 py-12">
+        <div className="mb-10">
+          <p className="mb-3 text-sm font-semibold uppercase tracking-[0.3em] text-white/50">
+            Creator Studio
           </p>
 
+          <h1 className="text-4xl font-bold tracking-tight md:text-5xl">
+            Upload your video
+          </h1>
+
+          <p className="mt-4 max-w-2xl text-white/60">
+            Upload your video to Your Videos. Your video
+            file will be stored securely and its details
+            will be saved automatically.
+          </p>
         </div>
-      </section>
 
-      <section className="mx-auto max-w-[1050px] px-5 pb-16">
-
-        <form
-          onSubmit={handleSubmit}
-          className="space-y-7"
-        >
-
-          <div className="overflow-hidden rounded-[32px] border border-blue-100 bg-white shadow-xl">
-
-            <div className="border-b border-slate-100 px-7 py-6">
-
-              <div className="flex items-center gap-4">
-
-                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-50 text-2xl">
-                  🎬
-                </div>
-
-                <div>
-                  <div className="text-[11px] font-black uppercase tracking-[2px] text-blue-500">
-                    Step 01
-                  </div>
-
-                  <h2 className="text-xl font-black text-slate-950">
-                    Choose your video
-                  </h2>
-                </div>
-
-              </div>
-
-            </div>
-
-            <div className="p-7">
-
+        <div className="grid gap-8 lg:grid-cols-[1.2fr_0.8fr]">
+          <div>
+            <div
+              onDrop={handleDrop}
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              className={`rounded-3xl border-2 border-dashed p-8 text-center transition ${
+                dragActive
+                  ? "border-white bg-white/10"
+                  : "border-white/20 bg-white/[0.03]"
+              }`}
+            >
               {!selectedFile ? (
-
-                <label
-                  onDragOver={(event) => {
-                    event.preventDefault();
-                    setDragActive(true);
-                  }}
-                  onDragLeave={() => {
-                    setDragActive(false);
-                  }}
-                  onDrop={handleDrop}
-                  className={
-                    "flex min-h-[300px] cursor-pointer flex-col " +
-                    "items-center justify-center rounded-[26px] border-2 " +
-                    "border-dashed transition " +
-                    (
-                      dragActive
-                        ? "border-blue-500 bg-blue-50"
-                        : "border-blue-200 bg-[#f8fbff] hover:border-blue-400"
-                    )
-                  }
-                >
-
-                  <input
-                    type="file"
-                    accept="video/*"
-                    className="hidden"
-                    onChange={handleVideoChange}
-                  />
-
-                  <div className="mb-5 flex h-20 w-20 items-center justify-center rounded-3xl bg-blue-100 text-4xl">
-                    🎥
+                <>
+                  <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-white/10 text-3xl">
+                    ↑
                   </div>
 
-                  <h3 className="text-xl font-black text-slate-900">
-                    Drop your video here
-                  </h3>
+                  <h2 className="text-xl font-semibold">
+                    Drag and drop your video
+                  </h2>
 
-                  <p className="mt-2 text-sm font-medium text-slate-500">
-                    or click to browse from your computer
+                  <p className="mt-2 text-sm text-white/50">
+                    or choose a video file from your computer
                   </p>
 
-                  <div className="mt-5 rounded-full bg-white px-4 py-2 text-xs font-bold text-blue-500 shadow-sm">
-                    MP4 • MOV • AVI • WebM
-                  </div>
+                  <label className="mt-6 inline-flex cursor-pointer rounded-full bg-white px-6 py-3 font-semibold text-black transition hover:bg-white/90">
+                    Choose Video
 
-                </label>
-
+                    <input
+                      type="file"
+                      accept="video/*"
+                      className="hidden"
+                      onChange={handleFileChange}
+                    />
+                  </label>
+                </>
               ) : (
-
-                <div className="space-y-5">
-
-                  <div className="overflow-hidden rounded-[24px] bg-slate-950">
-
-                    {videoPreview && (
+                <>
+                  <div className="overflow-hidden rounded-2xl bg-black">
+                    {previewUrl && (
                       <video
-                        src={videoPreview}
+                        src={previewUrl}
                         controls
-                        className="max-h-[500px] w-full"
+                        className="max-h-[420px] w-full object-contain"
                       />
                     )}
-
                   </div>
 
-                  <div className="flex flex-col gap-4 rounded-2xl border border-blue-100 bg-blue-50 p-5 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="mt-5 text-left">
+                    <p className="font-semibold">
+                      {selectedFile.name}
+                    </p>
 
-                    <div className="min-w-0">
-
-                      <div className="text-xs font-black uppercase tracking-[1.5px] text-blue-500">
-                        Selected video
-                      </div>
-
-                      <div className="mt-1 truncate text-sm font-bold text-slate-800">
-                        {videoName}
-                      </div>
-
-                    </div>
-
-                    <label className="cursor-pointer rounded-full bg-white px-5 py-2.5 text-sm font-bold text-blue-600 shadow-sm">
-
-                      Change video
-
-                      <input
-                        type="file"
-                        accept="video/*"
-                        className="hidden"
-                        onChange={handleVideoChange}
-                      />
-
-                    </label>
-
+                    <p className="mt-1 text-sm text-white/50">
+                      {(selectedFile.size / (1024 * 1024)).toFixed(
+                        2
+                      )}{" "}
+                      MB
+                    </p>
                   </div>
 
-                </div>
+                  <label className="mt-5 inline-flex cursor-pointer rounded-full border border-white/20 px-5 py-2 text-sm font-semibold transition hover:bg-white/10">
+                    Choose Another Video
 
+                    <input
+                      type="file"
+                      accept="video/*"
+                      className="hidden"
+                      onChange={handleFileChange}
+                    />
+                  </label>
+                </>
               )}
-
             </div>
 
+            {isUploading && (
+              <div className="mt-6 rounded-2xl border border-white/10 bg-white/[0.03] p-5">
+                <div className="mb-3 flex items-center justify-between text-sm">
+                  <span>Uploading video...</span>
+                  <span>{uploadProgress}%</span>
+                </div>
+
+                <div className="h-2 overflow-hidden rounded-full bg-white/10">
+                  <div
+                    className="h-full rounded-full bg-white transition-all duration-300"
+                    style={{
+                      width: `${uploadProgress}%`,
+                    }}
+                  />
+                </div>
+              </div>
+            )}
           </div>
 
-          <div className="overflow-hidden rounded-[32px] border border-blue-100 bg-white shadow-xl">
+          <div className="rounded-3xl border border-white/10 bg-white/[0.03] p-6">
+            <h2 className="text-xl font-semibold">
+              Video details
+            </h2>
 
-            <div className="border-b border-slate-100 px-7 py-6">
-
-              <div className="flex items-center gap-4">
-
-                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-50 text-2xl">
-                  ✨
-                </div>
-
-                <div>
-                  <div className="text-[11px] font-black uppercase tracking-[2px] text-blue-500">
-                    Step 02
-                  </div>
-
-                  <h2 className="text-xl font-black text-slate-950">
-                    Tell viewers about your video
-                  </h2>
-                </div>
-
-              </div>
-
-            </div>
-
-            <div className="space-y-6 p-7">
-
+            <div className="mt-6 space-y-5">
               <div>
-
-                <label className="mb-2 block text-sm font-black text-slate-800">
-                  Video title
+                <label className="mb-2 block text-sm font-medium text-white/80">
+                  Title
                 </label>
 
                 <input
                   type="text"
                   value={title}
-                  onChange={(event) => {
-                    setTitle(event.target.value);
-                  }}
-                  placeholder="Enter an attractive video title"
-                  maxLength={100}
-                  className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-5 py-4 text-sm outline-none focus:border-blue-400 focus:bg-white focus:ring-4 focus:ring-blue-100"
+                  onChange={(event) =>
+                    setTitle(event.target.value)
+                  }
+                  placeholder="Enter video title"
+                  className="w-full rounded-xl border border-white/10 bg-black px-4 py-3 text-white outline-none transition placeholder:text-white/30 focus:border-white/30"
                 />
-
               </div>
 
               <div>
-
-                <label className="mb-2 block text-sm font-black text-slate-800">
+                <label className="mb-2 block text-sm font-medium text-white/80">
                   Description
                 </label>
 
                 <textarea
                   value={description}
-                  onChange={(event) => {
-                    setDescription(event.target.value);
-                  }}
-                  placeholder="Tell viewers what your video is about..."
-                  rows={6}
-                  maxLength={5000}
-                  className="w-full resize-none rounded-2xl border border-slate-200 bg-slate-50 px-5 py-4 text-sm outline-none focus:border-blue-400 focus:bg-white focus:ring-4 focus:ring-blue-100"
+                  onChange={(event) =>
+                    setDescription(event.target.value)
+                  }
+                  placeholder="Tell viewers about your video"
+                  rows={5}
+                  className="w-full resize-none rounded-xl border border-white/10 bg-black px-4 py-3 text-white outline-none transition placeholder:text-white/30 focus:border-white/30"
                 />
-
               </div>
 
               <div>
-
-                <label className="mb-2 block text-sm font-black text-slate-800">
+                <label className="mb-2 block text-sm font-medium text-white/80">
                   Category
                 </label>
 
                 <select
                   value={category}
-                  onChange={(event) => {
-                    setCategory(event.target.value);
-                  }}
-                  className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-5 py-4 text-sm font-bold outline-none focus:border-blue-400 focus:bg-white focus:ring-4 focus:ring-blue-100"
+                  onChange={(event) =>
+                    setCategory(event.target.value)
+                  }
+                  className="w-full rounded-xl border border-white/10 bg-black px-4 py-3 text-white outline-none focus:border-white/30"
                 >
-
                   <option value="Entertainment">
                     Entertainment
                   </option>
@@ -401,12 +360,12 @@ export default function UploadPage() {
                     Music
                   </option>
 
-                  <option value="Education">
-                    Education
-                  </option>
-
                   <option value="Gaming">
                     Gaming
+                  </option>
+
+                  <option value="Education">
+                    Education
                   </option>
 
                   <option value="Technology">
@@ -425,115 +384,53 @@ export default function UploadPage() {
                     Travel
                   </option>
 
-                  <option value="Comedy">
-                    Comedy
+                  <option value="Lifestyle">
+                    Lifestyle
                   </option>
 
-                  <option value="Film & Animation">
-                    Film & Animation
+                  <option value="Other">
+                    Other
                   </option>
-
-                  <option value="People & Blogs">
-                    People & Blogs
-                  </option>
-
                 </select>
-
               </div>
 
+              <button
+                type="button"
+                onClick={handleUpload}
+                disabled={
+                  !selectedFile ||
+                  isUploading
+                }
+                className="w-full rounded-xl bg-white px-5 py-3 font-semibold text-black transition hover:bg-white/90 disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                {isUploading
+                  ? `Uploading ${uploadProgress}%`
+                  : "Upload Video"}
+              </button>
+
+              <p className="text-center text-xs leading-5 text-white/40">
+                By uploading, you confirm that you have
+                the rights to share this video.
+              </p>
             </div>
-
           </div>
-
-          <div className="overflow-hidden rounded-[32px] border border-blue-100 bg-white shadow-xl">
-
-            <div className="p-7">
-
-              {uploading && (
-
-                <div className="mb-6 rounded-2xl border border-blue-100 bg-blue-50 p-5">
-
-                  <div className="mb-3 flex items-center justify-between">
-
-                    <span className="text-sm font-black text-blue-700">
-                      Uploading video...
-                    </span>
-
-                    <span className="text-sm font-black text-blue-600">
-                      {uploadProgress}%
-                    </span>
-
-                  </div>
-
-                  <div className="h-3 overflow-hidden rounded-full bg-blue-100">
-
-                    <div
-                      className="h-full rounded-full bg-gradient-to-r from-blue-600 to-cyan-400 transition-all"
-                      style={{
-                        width: uploadProgress + "%",
-                      }}
-                    />
-
-                  </div>
-
-                </div>
-
-              )}
-
-              <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
-
-                <div>
-
-                  <div className="text-[11px] font-black uppercase tracking-[2px] text-blue-500">
-                    Step 03
-                  </div>
-
-                  <h2 className="mt-1 text-xl font-black text-slate-950">
-                    Ready to publish?
-                  </h2>
-
-                  <p className="mt-2 text-sm text-slate-500">
-                    Your video will be uploaded to Your Videos.
-                  </p>
-
-                </div>
-
-                <button
-                  type="submit"
-                  disabled={uploading}
-                  className="rounded-2xl bg-gradient-to-r from-blue-600 to-cyan-500 px-8 py-4 text-sm font-black text-white shadow-xl transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  {uploading
-                    ? "Uploading " + uploadProgress + "%"
-                    : "Publish Video →"}
-                </button>
-
-              </div>
-
-            </div>
-
-          </div>
-
-        </form>
-
+        </div>
       </section>
 
-      <footer className="border-t border-blue-100 bg-white">
+      <footer className="border-t border-white/10 px-6 py-8">
+        <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 text-sm text-white/40 md:flex-row">
+          <p>
+            © {new Date().getFullYear()} Your Videos
+          </p>
 
-        <div className="mx-auto max-w-[1050px] px-5 py-8 text-center">
-
-          <div className="text-sm font-black text-slate-800">
-            Your Videos
-          </div>
-
-          <div className="mt-1 text-xs font-medium text-slate-400">
-            Create • Upload • Share
-          </div>
-
+          <Link
+            href="/"
+            className="transition hover:text-white"
+          >
+            Back to Home
+          </Link>
         </div>
-
       </footer>
-
     </main>
   );
 }
