@@ -3,7 +3,7 @@
 import { useRef, useState } from "react";
 
 const UPLOAD_SERVER =
-  "https://few-mba-shame-project.trycloudflare.com";
+  "https://wings-transaction-lowest-basic.trycloudflare.com";
 
 const categories = [
   "Entertainment",
