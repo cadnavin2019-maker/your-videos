@@ -3,7 +3,7 @@
 import { useRef, useState } from "react";
 
 const UPLOAD_SERVER =
-    "https://YOUR-NEW-URL.trycloudflare.com";
+    "https://function-thrown-scsi-cold.trycloudflare.com";
 
 const categories = [
   "Entertainment",
