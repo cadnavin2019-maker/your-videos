@@ -1,94 +1,98 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
+import DolbyPlayer from "@/components/DolbyPlayer";
 
-const videos = [
-  {
-    id: 1,
-    title: "Welcome to Your Videos",
-    channel: "Your Videos",
-    views: "1.2K views",
-    description:
-      "Welcome to Your Videos — your new home for videos, creators and stories.",
-  },
-  {
-    id: 2,
-    title: "The Future of Technology",
-    channel: "Tech World",
-    views: "8.5K views",
-    description:
-      "Explore the exciting future of technology and innovation.",
-  },
-  {
-    id: 3,
-    title: "Beautiful Places Around the World",
-    channel: "Travel Vibes",
-    views: "24K views",
-    description:
-      "Discover beautiful places and amazing destinations around the world.",
-  },
-  {
-    id: 4,
-    title: "The World of Gaming",
-    channel: "Game Zone",
-    views: "32K views",
-    description:
-      "Gaming highlights, entertainment and amazing gaming moments.",
-  },
-  {
-    id: 5,
-    title: "Music That Changes Everything",
-    channel: "Music Station",
-    views: "45K views",
-    description:
-      "Enjoy music, performances and unforgettable moments.",
-  },
-  {
-    id: 6,
-    title: "World News Today",
-    channel: "Daily News",
-    views: "19K views",
-    description:
-      "Latest stories and important events from around the world.",
-  },
-  {
-    id: 7,
-    title: "Amazing Sports Moments",
-    channel: "Sports World",
-    views: "51K views",
-    description:
-      "The greatest sports moments and unforgettable highlights.",
-  },
-  {
-    id: 8,
-    title: "Explore Beautiful Nature",
-    channel: "Nature Life",
-    views: "15K views",
-    description:
-      "Relax and explore beautiful nature from around the world.",
-  },
-];
+type Video = {
+  id: number;
+  title: string;
+  description: string;
+  category: string;
+  video_url: string;
+  pathname: string;
+  created_at: string;
+};
 
 export default function WatchPage() {
   const params = useParams();
 
-  const id = Number(params.id);
+  const id = params?.id;
 
-  const video = videos.find((item) => item.id === id);
+  const [video, setVideo] = useState<Video | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
-  if (!video) {
+  useEffect(() => {
+    if (!id) return;
+
+    const loadVideo = async () => {
+      try {
+        const response = await fetch("/api/videos");
+        const data = await response.json();
+
+        if (!data.success) {
+          throw new Error(data.error || "Failed to load videos.");
+        }
+
+        const foundVideo = data.videos.find(
+          (item: Video) => String(item.id) === String(id)
+        );
+
+        if (!foundVideo) {
+          setError("Video not found.");
+          return;
+        }
+
+        setVideo(foundVideo);
+      } catch (err) {
+        console.error("WATCH VIDEO ERROR:", err);
+
+        setError(
+          err instanceof Error
+            ? err.message
+            : "Failed to load video."
+        );
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadVideo();
+  }, [id]);
+
+  if (loading) {
     return (
-      <main className="min-h-screen bg-[#f4f8ff] p-10">
+      <main className="min-h-screen bg-[#f4f8ff] text-slate-900">
+        <div className="flex min-h-screen items-center justify-center">
+          <div className="text-center">
+            <div className="text-4xl">🎬</div>
+            <p className="mt-4 text-slate-500">
+              Loading video...
+            </p>
+          </div>
+        </div>
+      </main>
+    );
+  }
+
+  if (error || !video) {
+    return (
+      <main className="min-h-screen bg-[#f4f8ff] p-10 text-slate-900">
         <h1 className="text-3xl font-bold">
           Video not found
         </h1>
 
+        <p className="mt-3 text-slate-500">
+          {error || "This video does not exist."}
+        </p>
+
         <Link
           href="/"
-          className="mt-5 inline-block text-blue-600"
+          className="mt-6 inline-block rounded-full bg-blue-600 px-6 py-3 font-semibold text-white"
         >
-          ← Back to Home
+          ← Back to Videos
         </Link>
       </main>
     );
@@ -124,8 +128,7 @@ export default function WatchPage() {
         </div>
       </header>
 
-
-      {/* VIDEO PLAYER */}
+      {/* VIDEO */}
 
       <section className="mx-auto max-w-[1200px] px-5 py-8">
 
@@ -136,39 +139,47 @@ export default function WatchPage() {
           ← Back to Videos
         </Link>
 
+        {/* PLAYER */}
+
         <div className="overflow-hidden rounded-3xl bg-black shadow-2xl">
 
-          <video
-            controls
-            autoPlay
-            className="aspect-video w-full"
-            src="https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4"
+          <DolbyPlayer
+            src={video.video_url}
           />
 
         </div>
-
 
         {/* VIDEO INFORMATION */}
 
         <div className="mt-6 rounded-3xl bg-white p-6 shadow-lg">
 
-          <h1 className="text-2xl font-bold md:text-3xl">
+          <div className="flex flex-wrap items-center gap-3">
+
+            <span className="rounded-full bg-blue-100 px-4 py-1.5 text-sm font-semibold text-blue-700">
+              {video.category}
+            </span>
+
+            <span className="text-sm text-slate-500">
+              {new Date(video.created_at).toLocaleDateString()}
+            </span>
+
+          </div>
+
+          <h1 className="mt-4 text-2xl font-bold md:text-3xl">
             {video.title}
           </h1>
 
-          <p className="mt-2 text-slate-500">
-            {video.views}
-          </p>
+          {/* CREATOR */}
 
           <div className="mt-5 flex items-center gap-4">
 
             <div className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-600 font-bold text-white">
-              {video.channel.charAt(0)}
+              YV
             </div>
 
             <div>
               <h2 className="font-bold">
-                {video.channel}
+                Your Videos
               </h2>
 
               <p className="text-sm text-slate-500">
@@ -182,15 +193,17 @@ export default function WatchPage() {
 
           </div>
 
+          {/* DESCRIPTION */}
 
-          <div className="mt-6 rounded-2xl bg-slate-50 p-5">
+          {video.description && (
+            <div className="mt-6 rounded-2xl bg-slate-50 p-5">
 
-            <p className="leading-7 text-slate-700">
-              {video.description}
-            </p>
+              <p className="leading-7 text-slate-700">
+                {video.description}
+              </p>
 
-          </div>
-
+            </div>
+          )}
 
           {/* ACTION BUTTONS */}
 
