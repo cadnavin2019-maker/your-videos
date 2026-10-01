@@ -3,7 +3,7 @@
 import { useRef, useState } from "react";
 
 const UPLOAD_SERVER =
-  "https://sign-demo-petite-nature.trycloudflare.com";
+    "https://YOUR-NEW-URL.trycloudflare.com";
 
 const categories = [
   "Entertainment",
