@@ -32,9 +32,17 @@ export default function Home() {
   useEffect(() => {
     const loadVideos = async () => {
       try {
-        const response = await fetch("/api/videos");
+        const response = await fetch("/api/videos", {
+          cache: "no-store",
+        });
 
         const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(
+            data.error || "Failed to load videos."
+          );
+        }
 
         if (data.success) {
           setVideos(data.videos || []);
@@ -244,6 +252,7 @@ export default function Home() {
                       src={video.video_url}
                       preload="metadata"
                       muted
+                      playsInline
                       className="h-full w-full object-cover"
                     />
 
