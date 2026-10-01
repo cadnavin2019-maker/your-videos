@@ -2,9 +2,6 @@
 
 import { useRef, useState } from "react";
 
-const UPLOAD_SERVER =
-    "https://function-thrown-scsi-cold.trycloudflare.com";
-
 const categories = [
   "Entertainment",
   "Music",
@@ -43,8 +40,7 @@ export default function UploadPage() {
   const handleFileChange = (
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
-    const file = event.target.files?.[0] || null;
-    selectFile(file);
+    selectFile(event.target.files?.[0] || null);
   };
 
   const handleDrop = (
@@ -52,8 +48,9 @@ export default function UploadPage() {
   ) => {
     event.preventDefault();
 
-    const file = event.dataTransfer.files?.[0] || null;
-    selectFile(file);
+    if (uploading) return;
+
+    selectFile(event.dataTransfer.files?.[0] || null);
   };
 
   const uploadVideo = async () => {
@@ -67,77 +64,82 @@ export default function UploadPage() {
       return;
     }
 
-    if (!category) {
-      setMessage("Please select a category.");
-      return;
-    }
-
     try {
       setUploading(true);
       setMessage("");
-      setUploadProgress(5);
-
-      const filename =
-        `${Date.now()}-${selectedFile.name}`;
+      setUploadProgress(0);
 
       const formData = new FormData();
 
       formData.append("file", selectedFile);
-      formData.append("pathname", `videos/${filename}`);
 
-      setUploadProgress(15);
+      const xhr = new XMLHttpRequest();
 
-      // Upload directly to your local F: drive
-      // through Cloudflare Tunnel.
-      const uploadResponse = await fetch(
-        `${UPLOAD_SERVER}/upload`,
-        {
-          method: "POST",
-          body: formData,
-        }
-      );
+      const uploadResult = await new Promise<{
+        url: string;
+        pathname: string;
+      }>((resolve, reject) => {
+        xhr.open("POST", "/api/upload");
 
-      setUploadProgress(70);
+        xhr.upload.onprogress = (event) => {
+          if (event.lengthComputable) {
+            const percent = Math.round(
+              (event.loaded / event.total) * 100
+            );
 
-      const uploadResult = await uploadResponse.json();
+            setUploadProgress(percent);
+          }
+        };
 
-      if (!uploadResponse.ok || !uploadResult.success) {
-        throw new Error(
-          uploadResult.error ||
-            "Video upload failed."
-        );
-      }
+        xhr.onload = () => {
+          try {
+            const result = JSON.parse(xhr.responseText);
 
-      const uploadedFilename =
-        uploadResult.filename;
+            if (xhr.status >= 200 && xhr.status < 300 && result.success) {
+              resolve({
+                url: result.url,
+                pathname: result.pathname,
+              });
+            } else {
+              reject(
+                new Error(
+                  result.error || "Video upload failed."
+                )
+              );
+            }
+          } catch {
+            reject(
+              new Error("Invalid response from upload server.")
+            );
+          }
+        };
 
-      const videoUrl =
-        `${UPLOAD_SERVER}/videos/${encodeURIComponent(
-          uploadedFilename
-        )}`;
+        xhr.onerror = () => {
+          reject(
+            new Error("Network error during upload.")
+          );
+        };
 
-      setUploadProgress(80);
+        xhr.send(formData);
+      });
 
-      // Save video information in Neon database
-      const databaseResponse = await fetch(
-        "/api/videos",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            title: title.trim(),
-            description: description.trim(),
-            category,
-            video_url: videoUrl,
-            pathname: `videos/${uploadedFilename}`,
-          }),
-        }
-      );
+      setUploadProgress(95);
 
-      const databaseResult =
-        await databaseResponse.json();
+      const databaseResponse = await fetch("/api/videos", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          title: title.trim(),
+          description: description.trim(),
+          category,
+          video_url: uploadResult.url,
+          pathname: uploadResult.pathname,
+        }),
+      });
+
+      const databaseResult = await databaseResponse.json();
 
       if (
         !databaseResponse.ok ||
@@ -150,9 +152,8 @@ export default function UploadPage() {
       }
 
       setUploadProgress(100);
-      setMessage(
-        "Video uploaded successfully!"
-      );
+
+      setMessage("Video uploaded successfully!");
 
       setSelectedFile(null);
       setTitle("");
@@ -189,11 +190,8 @@ export default function UploadPage() {
           Upload your video to MSP Video.
         </p>
 
-        {/* Video Upload Area */}
         <div
-          onDragOver={(event) =>
-            event.preventDefault()
-          }
+          onDragOver={(event) => event.preventDefault()}
           onDrop={handleDrop}
           onClick={() =>
             !uploading &&
@@ -212,8 +210,7 @@ export default function UploadPage() {
           </h2>
 
           <p className="mt-2 text-gray-400">
-            Drag & drop your video here or click
-            to browse
+            Drag & drop your video here or click to browse
           </p>
 
           <input
@@ -226,7 +223,6 @@ export default function UploadPage() {
           />
         </div>
 
-        {/* Selected File */}
         {selectedFile && (
           <div className="mt-6 rounded-xl bg-gray-900 p-5">
             <p className="font-medium">
@@ -238,15 +234,11 @@ export default function UploadPage() {
             </p>
 
             <p className="mt-1 text-sm text-gray-500">
-              {(selectedFile.size / 1024 / 1024).toFixed(
-                2
-              )}{" "}
-              MB
+              {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
             </p>
           </div>
         )}
 
-        {/* Title */}
         <div className="mt-8">
           <label className="mb-2 block font-medium">
             Title
@@ -264,7 +256,6 @@ export default function UploadPage() {
           />
         </div>
 
-        {/* Description */}
         <div className="mt-6">
           <label className="mb-2 block font-medium">
             Description
@@ -282,7 +273,6 @@ export default function UploadPage() {
           />
         </div>
 
-        {/* Category */}
         <div className="mt-6">
           <label className="mb-2 block font-medium">
             Category
@@ -304,17 +294,17 @@ export default function UploadPage() {
           </select>
         </div>
 
-        {/* Progress */}
         {uploading && (
           <div className="mt-8">
             <div className="mb-2 flex justify-between text-sm">
-              <span>Uploading...</span>
+              <span>Uploading to cloud...</span>
+
               <span>{uploadProgress}%</span>
             </div>
 
             <div className="h-3 overflow-hidden rounded-full bg-gray-800">
               <div
-                className="h-full rounded-full bg-white transition-all duration-300"
+                className="h-full rounded-full bg-white transition-all duration-200"
                 style={{
                   width: `${uploadProgress}%`,
                 }}
@@ -323,14 +313,12 @@ export default function UploadPage() {
           </div>
         )}
 
-        {/* Message */}
         {message && (
           <div className="mt-6 rounded-xl bg-gray-900 p-4">
             {message}
           </div>
         )}
 
-        {/* Upload Button */}
         <button
           onClick={uploadVideo}
           disabled={uploading || !selectedFile}
