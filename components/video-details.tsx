@@ -42,7 +42,7 @@ export function VideoDetails({ video }: { video: Video }) {
 
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <span className="flex size-11 items-center justify-center rounded-full bg-gradient-to-br from-zinc-600 to-zinc-800 text-sm font-semibold">
+          <span className="flex size-11 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-blue-800 text-sm font-semibold text-white">
             YV
           </span>
           <div>
@@ -56,12 +56,12 @@ export function VideoDetails({ video }: { video: Video }) {
             type="button"
             aria-pressed={liked}
             onClick={() => setLiked((value) => !value)}
-            className={`${actionClass} ${liked ? "bg-foreground text-background" : "bg-surface-raised hover:bg-zinc-700"}`}
+            className={`${actionClass} ${liked ? "bg-foreground text-background" : "bg-surface-raised hover:bg-surface-hover"}`}
           >
             <ThumbsUp className={`size-4 ${liked ? "fill-current" : ""}`} aria-hidden="true" />
             {liked ? "Liked" : "Like"}
           </button>
-          <button type="button" onClick={handleShare} className={`${actionClass} bg-surface-raised hover:bg-zinc-700`}>
+          <button type="button" onClick={handleShare} className={`${actionClass} bg-surface-raised hover:bg-surface-hover`}>
             {copied ? <Link2 className="size-4" aria-hidden="true" /> : <Share2 className="size-4" aria-hidden="true" />}
             {copied ? "Link copied" : "Share"}
           </button>
@@ -69,7 +69,7 @@ export function VideoDetails({ video }: { video: Video }) {
             type="button"
             aria-pressed={saved}
             onClick={() => setSaved((value) => !value)}
-            className={`${actionClass} bg-surface-raised hover:bg-zinc-700`}
+            className={`${actionClass} bg-surface-raised hover:bg-surface-hover`}
           >
             {saved ? <Check className="size-4" aria-hidden="true" /> : <Clock className="size-4" aria-hidden="true" />}
             {saved ? "Saved" : "Watch later"}
@@ -77,7 +77,7 @@ export function VideoDetails({ video }: { video: Video }) {
         </div>
       </div>
 
-      <div className="rounded-2xl bg-surface p-5 ring-1 ring-border">
+      <div className="rounded-2xl bg-surface p-5 ring-1 ring-border shadow-sm shadow-accent/5">
         <div className="flex flex-wrap items-center gap-2 text-sm font-medium">
           <span className="rounded-full bg-accent/15 px-3 py-1 text-accent">{video.category}</span>
           <time dateTime={video.created_at} className="text-foreground/80" title={publishedDate}>

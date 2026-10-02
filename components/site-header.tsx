@@ -133,7 +133,7 @@ export function SiteHeader() {
           <Link
             href="/profile"
             aria-label="Your Studio"
-            className="hidden size-10 items-center justify-center rounded-full bg-gradient-to-br from-zinc-600 to-zinc-800 text-sm font-semibold ring-2 ring-transparent transition hover:ring-accent/60 sm:flex"
+            className="hidden size-10 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-blue-800 text-sm font-semibold text-white ring-2 ring-transparent transition hover:ring-accent/60 sm:flex"
           >
             YV
           </Link>

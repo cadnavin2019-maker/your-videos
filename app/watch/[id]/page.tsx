@@ -39,7 +39,7 @@ export default function WatchPage() {
           action={
             <Link
               href="/"
-              className="inline-flex items-center gap-2 rounded-full bg-foreground px-5 py-2.5 text-sm font-semibold text-background transition hover:bg-white"
+              className="inline-flex items-center gap-2 rounded-full bg-accent px-5 py-2.5 text-sm font-semibold text-white shadow-md shadow-accent/25 transition hover:bg-accent-hover"
             >
               <ArrowLeft className="size-4" aria-hidden="true" />
               Back to videos
@@ -58,7 +58,7 @@ export default function WatchPage() {
   return (
     <main className="mx-auto grid max-w-[1600px] gap-8 px-4 py-6 md:px-8 xl:grid-cols-[1fr_400px]">
       <div className="flex min-w-0 flex-col gap-6">
-        <div className="animate-fade-up overflow-hidden rounded-2xl bg-black shadow-2xl shadow-black/50 ring-1 ring-border">
+        <div className="animate-fade-up overflow-hidden rounded-2xl bg-black shadow-2xl shadow-accent/15 ring-1 ring-border">
           <DolbyPlayer src={video.video_url} />
         </div>
         <VideoDetails video={video} />

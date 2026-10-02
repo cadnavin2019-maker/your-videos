@@ -34,7 +34,7 @@ export function UploadStatus({ uploading, progress, status, succeeded, uploadedI
         {tone === "success" && uploadedId !== null && (
           <Link
             href={`/watch/${uploadedId}`}
-            className="flex items-center gap-1.5 rounded-full bg-foreground px-4 py-2 text-xs font-semibold text-background transition hover:bg-white"
+            className="flex items-center gap-1.5 rounded-full bg-accent px-4 py-2 text-xs font-semibold text-white shadow-md shadow-accent/25 transition hover:bg-accent-hover"
           >
             <Play className="size-3 fill-current" aria-hidden="true" />
             Watch

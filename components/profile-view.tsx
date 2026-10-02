@@ -25,7 +25,7 @@ export function ProfileView() {
         <div aria-hidden="true" className="absolute inset-0 -z-10 bg-gradient-to-br from-accent/25 via-background to-background" />
         <div className="mx-auto flex max-w-[1600px] flex-col gap-8 px-4 py-12 md:flex-row md:items-end md:justify-between md:px-8 md:py-16">
           <div className="flex animate-fade-up items-center gap-5">
-            <span className="flex size-20 items-center justify-center rounded-full bg-gradient-to-br from-zinc-500 to-zinc-800 text-2xl font-semibold ring-4 ring-background md:size-24">
+            <span className="flex size-20 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-blue-800 text-2xl font-semibold text-white ring-4 ring-background md:size-24">
               YV
             </span>
             <div>
@@ -47,7 +47,7 @@ export function ProfileView() {
       <div className="mx-auto flex max-w-[1600px] flex-col gap-10 px-4 pt-8 md:px-8">
         <dl className="grid animate-fade-up grid-cols-1 gap-4 [animation-delay:120ms] sm:grid-cols-3">
           {stats.map((stat) => (
-            <div key={stat.label} className="rounded-2xl bg-surface p-5 ring-1 ring-border">
+            <div key={stat.label} className="rounded-2xl bg-surface p-5 ring-1 ring-border shadow-sm shadow-accent/5">
               <dt className="text-sm text-muted">{stat.label}</dt>
               <dd className="mt-2 text-2xl font-semibold tabular-nums tracking-tight">
                 {isLoading ? <span className="skeleton inline-block h-7 w-16 rounded" /> : stat.value}

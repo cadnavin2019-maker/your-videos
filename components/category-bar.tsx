@@ -27,15 +27,15 @@ export function CategoryBar({ categories, selected, counts, onSelect }: Category
               onClick={() => onSelect(category)}
               className={`flex shrink-0 items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition-all duration-200 active:scale-95 ${
                 active
-                  ? "bg-foreground text-background"
-                  : "bg-surface-raised text-foreground/80 hover:bg-zinc-700 hover:text-foreground"
+                  ? "bg-accent text-white shadow-md shadow-accent/25"
+                  : "bg-surface-raised text-foreground/80 hover:bg-surface-hover hover:text-accent"
               }`}
             >
               {category}
               {count > 0 && (
                 <span
                   className={`rounded-full px-1.5 text-xs tabular-nums ${
-                    active ? "bg-background/10 text-background/70" : "text-muted"
+                    active ? "bg-white/20 text-white/90" : "text-muted"
                   }`}
                 >
                   {count}

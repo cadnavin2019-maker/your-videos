@@ -28,7 +28,7 @@ export function VideoThumbnail({ src, title, hovering = false, className = "" }:
   }, [hovering]);
 
   return (
-    <div className={`relative aspect-video overflow-hidden rounded-xl bg-surface ${className}`}>
+    <div className={`relative aspect-video overflow-hidden rounded-xl bg-surface-raised ring-1 ring-border shadow-sm shadow-accent/5 ${className}`}>
       {!loaded && <div aria-hidden="true" className="skeleton absolute inset-0" />}
       <video
         ref={videoRef}

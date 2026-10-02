@@ -133,7 +133,7 @@ export default function UploadPage() {
           />
         </div>
 
-        <div className="flex flex-col gap-5 rounded-3xl bg-surface/60 p-6 ring-1 ring-border">
+        <div className="flex flex-col gap-5 rounded-3xl bg-surface p-6 ring-1 ring-border shadow-lg shadow-accent/5">
           <div className="flex flex-col gap-2">
             <label htmlFor="title" className="text-sm font-medium">
               Title <span className="text-accent">*</span>
@@ -157,7 +157,7 @@ export default function UploadPage() {
               {UPLOAD_CATEGORIES.map((option) => (
                 <label
                   key={option}
-                  className="cursor-pointer rounded-full bg-surface-raised px-4 py-2 text-sm font-medium text-foreground/80 transition hover:bg-zinc-700 has-[:checked]:bg-foreground has-[:checked]:text-background has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-accent"
+                  className="cursor-pointer rounded-full bg-surface-raised px-4 py-2 text-sm font-medium text-foreground/80 transition hover:bg-surface-hover has-[:checked]:bg-foreground has-[:checked]:text-background has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-accent"
                 >
                   <input
                     type="radio"

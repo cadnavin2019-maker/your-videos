@@ -54,7 +54,7 @@ export function HomeFeed() {
                       type="button"
                       onClick={() => router.push("/")}
                       aria-label="Clear search"
-                      className="rounded-full p-0.5 text-muted transition hover:bg-zinc-700 hover:text-foreground"
+                      className="rounded-full p-0.5 text-muted transition hover:bg-surface-hover hover:text-foreground"
                     >
                       <X className="size-3.5" />
                     </button>
@@ -82,7 +82,7 @@ export function HomeFeed() {
               <button
                 type="button"
                 onClick={() => refresh()}
-                className="rounded-full bg-surface-raised px-5 py-2.5 text-sm font-semibold transition hover:bg-zinc-700"
+                className="rounded-full bg-surface-raised px-5 py-2.5 text-sm font-semibold transition hover:bg-surface-hover"
               >
                 Try again
               </button>

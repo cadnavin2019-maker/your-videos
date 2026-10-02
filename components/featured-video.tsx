@@ -8,7 +8,7 @@ export function FeaturedVideo({ video }: { video: Video }) {
   return (
     <section
       aria-labelledby="featured-title"
-      className="relative isolate overflow-hidden rounded-3xl border border-border bg-surface"
+      className="relative isolate overflow-hidden rounded-3xl border border-border bg-surface shadow-xl shadow-accent/10"
     >
       <video
         src={video.video_url}
@@ -46,14 +46,14 @@ export function FeaturedVideo({ video }: { video: Video }) {
         <div className="flex animate-fade-up flex-wrap gap-3 [animation-delay:240ms]">
           <Link
             href={`/watch/${video.id}`}
-            className="flex items-center gap-2 rounded-full bg-foreground px-6 py-3 text-sm font-semibold text-background transition hover:bg-white active:scale-[0.98]"
+            className="flex items-center gap-2 rounded-full bg-accent px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-accent/25 transition hover:bg-accent-hover active:scale-[0.98]"
           >
             <Play aria-hidden="true" className="size-4 fill-current" />
             Watch now
           </Link>
           <Link
             href={`/watch/${video.id}#details`}
-            className="flex items-center gap-2 rounded-full bg-white/10 px-6 py-3 text-sm font-semibold text-foreground backdrop-blur-md transition hover:bg-white/20"
+            className="flex items-center gap-2 rounded-full border border-border bg-white/80 px-6 py-3 text-sm font-semibold text-accent backdrop-blur-md transition hover:border-accent/40 hover:bg-white"
           >
             <Info aria-hidden="true" className="size-4" />
             More info

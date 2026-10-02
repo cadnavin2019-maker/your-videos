@@ -36,7 +36,7 @@ export function UploadDropzone({ file, disabled = false, onFileChange }: UploadD
 
   if (file && previewUrl) {
     return (
-      <div className="overflow-hidden rounded-3xl bg-surface ring-1 ring-border">
+      <div className="overflow-hidden rounded-3xl bg-surface ring-1 ring-border shadow-lg shadow-accent/5">
         <video src={previewUrl} controls playsInline className="aspect-video w-full bg-black" />
         <div className="flex items-center gap-3 p-4">
           <FileVideo className="size-5 shrink-0 text-accent" aria-hidden="true" />

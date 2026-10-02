@@ -45,7 +45,7 @@ export function VideoCard({ video, layout = "grid", index = 0 }: VideoCardProps)
         )}
         <div className="min-w-0">
           <h3
-            className={`line-clamp-2 font-medium leading-snug text-foreground transition-colors group-hover:text-white ${
+            className={`line-clamp-2 font-medium leading-snug text-foreground transition-colors group-hover:text-accent ${
               compact ? "text-sm" : "text-[15px]"
             }`}
           >
