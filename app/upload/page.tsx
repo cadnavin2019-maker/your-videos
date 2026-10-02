@@ -1,334 +1,200 @@
 "use client";
 
-import { useRef, useState } from "react";
-
-const categories = [
-  "Entertainment",
-  "Music",
-  "Sports",
-  "News",
-  "Education",
-  "Technology",
-  "Other",
-];
+import { useState } from "react";
+import { upload } from "@vercel/blob/client";
 
 export default function UploadPage() {
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [file, setFile] = useState<File | null>(null);
   const [title, setTitle] = useState("");
+  const [category, setCategory] = useState("General");
   const [description, setDescription] = useState("");
-  const [category, setCategory] = useState("Entertainment");
-
-  const [uploadProgress, setUploadProgress] = useState(0);
+  const [progress, setProgress] = useState(0);
+  const [status, setStatus] = useState("");
   const [uploading, setUploading] = useState(false);
-  const [message, setMessage] = useState("");
 
-  const selectFile = (file: File | null) => {
-    if (!file) return;
-
-    if (!file.type.startsWith("video/")) {
-      setMessage("Please select a video file.");
-      return;
-    }
-
-    setSelectedFile(file);
-    setMessage("");
-    setUploadProgress(0);
-  };
-
-  const handleFileChange = (
-    event: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    selectFile(event.target.files?.[0] || null);
-  };
-
-  const handleDrop = (
-    event: React.DragEvent<HTMLDivElement>
-  ) => {
-    event.preventDefault();
-
-    if (uploading) return;
-
-    selectFile(event.dataTransfer.files?.[0] || null);
-  };
-
-  const uploadVideo = async () => {
-    if (!selectedFile) {
-      setMessage("Please select a video first.");
+  async function handleUpload() {
+    if (!file) {
+      setStatus("Please select a video.");
       return;
     }
 
     if (!title.trim()) {
-      setMessage("Please enter a video title.");
+      setStatus("Please enter a title.");
       return;
     }
 
     try {
       setUploading(true);
-      setMessage("");
-      setUploadProgress(0);
+      setProgress(0);
+      setStatus("Starting upload...");
 
-      const formData = new FormData();
+      const safeName = file.name.replace(
+        /[^a-zA-Z0-9._-]/g,
+        "_"
+      );
 
-      formData.append("file", selectedFile);
+      const pathname = `videos/${Date.now()}-${safeName}`;
 
-      const xhr = new XMLHttpRequest();
+      const blob = await upload(pathname, file, {
+        access: "public",
+        handleUploadUrl: "/api/upload",
+        multipart: true,
 
-      const uploadResult = await new Promise<{
-        url: string;
-        pathname: string;
-      }>((resolve, reject) => {
-        xhr.open("POST", "/api/upload");
-
-        xhr.upload.onprogress = (event) => {
-          if (event.lengthComputable) {
-            const percent = Math.round(
-              (event.loaded / event.total) * 100
-            );
-
-            setUploadProgress(percent);
-          }
-        };
-
-        xhr.onload = () => {
-          try {
-            const result = JSON.parse(xhr.responseText);
-
-            if (xhr.status >= 200 && xhr.status < 300 && result.success) {
-              resolve({
-                url: result.url,
-                pathname: result.pathname,
-              });
-            } else {
-              reject(
-                new Error(
-                  result.error || "Video upload failed."
-                )
-              );
-            }
-          } catch {
-            reject(
-              new Error("Invalid response from upload server.")
-            );
-          }
-        };
-
-        xhr.onerror = () => {
-          reject(
-            new Error("Network error during upload.")
-          );
-        };
-
-        xhr.send(formData);
+        onUploadProgress: (event) => {
+          setProgress(Math.round(event.percentage));
+          setStatus(`Uploading... ${Math.round(event.percentage)}%`);
+        },
       });
 
-      setUploadProgress(95);
+      setStatus("Saving video information...");
 
-      const databaseResponse = await fetch("/api/videos", {
+      const response = await fetch("/api/videos", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          title: title.trim(),
-          description: description.trim(),
+          title,
+          description,
           category,
-          video_url: uploadResult.url,
-          pathname: uploadResult.pathname,
+          video_url: blob.url,
+          pathname: blob.pathname,
         }),
       });
 
-      const databaseResult = await databaseResponse.json();
+      const result = await response.json();
 
-      if (
-        !databaseResponse.ok ||
-        !databaseResult.success
-      ) {
+      if (!response.ok || !result.success) {
         throw new Error(
-          databaseResult.error ||
-            "Video uploaded, but database save failed."
+          result.error || "Failed to save video information."
         );
       }
 
-      setUploadProgress(100);
+      setProgress(100);
+      setStatus("Video uploaded successfully!");
 
-      setMessage("Video uploaded successfully!");
-
-      setSelectedFile(null);
+      setFile(null);
       setTitle("");
       setDescription("");
-      setCategory("Entertainment");
-
-      if (fileInputRef.current) {
-        fileInputRef.current.value = "";
-      }
+      setCategory("General");
     } catch (error) {
       console.error("UPLOAD ERROR:", error);
 
-      setMessage(
+      setStatus(
         error instanceof Error
           ? error.message
           : "Video upload failed."
       );
-
-      setUploadProgress(0);
     } finally {
       setUploading(false);
     }
-  };
+  }
 
   return (
-    <main className="min-h-screen bg-black text-white">
-      <div className="mx-auto max-w-4xl px-6 py-12">
-
-        <h1 className="mb-2 text-4xl font-bold">
+    <main className="min-h-screen bg-black text-white p-8">
+      <div className="max-w-2xl mx-auto">
+        <h1 className="text-3xl font-bold mb-8">
           Upload Video
         </h1>
 
-        <p className="mb-8 text-gray-400">
-          Upload your video to MSP Video.
-        </p>
+        <div className="space-y-5">
+          <div>
+            <label className="block mb-2">
+              Video
+            </label>
 
-        <div
-          onDragOver={(event) => event.preventDefault()}
-          onDrop={handleDrop}
-          onClick={() =>
-            !uploading &&
-            fileInputRef.current?.click()
-          }
-          className="cursor-pointer rounded-2xl border-2 border-dashed border-gray-700 bg-gray-900 p-12 text-center transition hover:border-gray-500"
-        >
-          <div className="mb-4 text-5xl">
-            🎬
+            <input
+              type="file"
+              accept="video/*"
+              disabled={uploading}
+              onChange={(e) =>
+                setFile(e.target.files?.[0] || null)
+              }
+              className="w-full"
+            />
           </div>
 
-          <h2 className="text-xl font-semibold">
-            {selectedFile
-              ? selectedFile.name
-              : "Select your video"}
-          </h2>
+          <div>
+            <label className="block mb-2">
+              Title
+            </label>
 
-          <p className="mt-2 text-gray-400">
-            Drag & drop your video here or click to browse
-          </p>
-
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="video/*"
-            onChange={handleFileChange}
-            className="hidden"
-            disabled={uploading}
-          />
-        </div>
-
-        {selectedFile && (
-          <div className="mt-6 rounded-xl bg-gray-900 p-5">
-            <p className="font-medium">
-              Selected video
-            </p>
-
-            <p className="mt-1 break-all text-sm text-gray-400">
-              {selectedFile.name}
-            </p>
-
-            <p className="mt-1 text-sm text-gray-500">
-              {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
-            </p>
+            <input
+              type="text"
+              value={title}
+              disabled={uploading}
+              onChange={(e) => setTitle(e.target.value)}
+              className="w-full p-3 rounded bg-zinc-900 border border-zinc-700"
+              placeholder="Video title"
+            />
           </div>
-        )}
 
-        <div className="mt-8">
-          <label className="mb-2 block font-medium">
-            Title
-          </label>
+          <div>
+            <label className="block mb-2">
+              Category
+            </label>
 
-          <input
-            type="text"
-            value={title}
-            onChange={(event) =>
-              setTitle(event.target.value)
-            }
-            placeholder="Enter video title"
+            <select
+              value={category}
+              disabled={uploading}
+              onChange={(e) => setCategory(e.target.value)}
+              className="w-full p-3 rounded bg-zinc-900 border border-zinc-700"
+            >
+              <option>General</option>
+              <option>Entertainment</option>
+              <option>Education</option>
+              <option>Technology</option>
+              <option>Sports</option>
+              <option>News</option>
+              <option>Music</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block mb-2">
+              Description
+            </label>
+
+            <textarea
+              value={description}
+              disabled={uploading}
+              onChange={(e) =>
+                setDescription(e.target.value)
+              }
+              className="w-full p-3 rounded bg-zinc-900 border border-zinc-700 min-h-32"
+              placeholder="Video description"
+            />
+          </div>
+
+          {uploading && (
+            <div>
+              <div className="w-full h-3 bg-zinc-800 rounded overflow-hidden">
+                <div
+                  className="h-full bg-blue-500 transition-all"
+                  style={{ width: `${progress}%` }}
+                />
+              </div>
+
+              <p className="mt-2 text-sm text-zinc-400">
+                {progress}%
+              </p>
+            </div>
+          )}
+
+          <button
+            onClick={handleUpload}
             disabled={uploading}
-            className="w-full rounded-xl border border-gray-700 bg-gray-900 px-4 py-3 outline-none focus:border-white"
-          />
-        </div>
-
-        <div className="mt-6">
-          <label className="mb-2 block font-medium">
-            Description
-          </label>
-
-          <textarea
-            value={description}
-            onChange={(event) =>
-              setDescription(event.target.value)
-            }
-            placeholder="Enter video description"
-            rows={5}
-            disabled={uploading}
-            className="w-full rounded-xl border border-gray-700 bg-gray-900 px-4 py-3 outline-none focus:border-white"
-          />
-        </div>
-
-        <div className="mt-6">
-          <label className="mb-2 block font-medium">
-            Category
-          </label>
-
-          <select
-            value={category}
-            onChange={(event) =>
-              setCategory(event.target.value)
-            }
-            disabled={uploading}
-            className="w-full rounded-xl border border-gray-700 bg-gray-900 px-4 py-3 outline-none"
+            className="w-full p-4 rounded bg-blue-600 hover:bg-blue-700 disabled:bg-zinc-700 font-semibold"
           >
-            {categories.map((item) => (
-              <option key={item} value={item}>
-                {item}
-              </option>
-            ))}
-          </select>
+            {uploading ? "Uploading..." : "Upload Video"}
+          </button>
+
+          {status && (
+            <p className="text-sm text-zinc-300">
+              {status}
+            </p>
+          )}
         </div>
-
-        {uploading && (
-          <div className="mt-8">
-            <div className="mb-2 flex justify-between text-sm">
-              <span>Uploading to cloud...</span>
-
-              <span>{uploadProgress}%</span>
-            </div>
-
-            <div className="h-3 overflow-hidden rounded-full bg-gray-800">
-              <div
-                className="h-full rounded-full bg-white transition-all duration-200"
-                style={{
-                  width: `${uploadProgress}%`,
-                }}
-              />
-            </div>
-          </div>
-        )}
-
-        {message && (
-          <div className="mt-6 rounded-xl bg-gray-900 p-4">
-            {message}
-          </div>
-        )}
-
-        <button
-          onClick={uploadVideo}
-          disabled={uploading || !selectedFile}
-          className="mt-8 w-full rounded-xl bg-white px-6 py-4 font-bold text-black transition hover:bg-gray-200 disabled:cursor-not-allowed disabled:opacity-40"
-        >
-          {uploading
-            ? `Uploading... ${uploadProgress}%`
-            : "Upload Video"}
-        </button>
-
       </div>
     </main>
   );
