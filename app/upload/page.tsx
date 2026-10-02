@@ -2,6 +2,10 @@
 
 import { useState } from "react";
 import { upload } from "@vercel/blob/client";
+import { mutate } from "swr";
+import { UPLOAD_CATEGORIES } from "@/lib/videos";
+import { UploadDropzone } from "@/components/upload-dropzone";
+import { UploadStatus } from "@/components/upload-status";
 
 export default function UploadPage() {
   const [file, setFile] = useState<File | null>(null);
@@ -11,8 +15,13 @@ export default function UploadPage() {
   const [progress, setProgress] = useState(0);
   const [status, setStatus] = useState("");
   const [uploading, setUploading] = useState(false);
+  const [uploadedId, setUploadedId] = useState<number | null>(null);
+  const [succeeded, setSucceeded] = useState(false);
 
   async function handleUpload() {
+    setSucceeded(false);
+    setUploadedId(null);
+
     if (!file) {
       setStatus("Please select a video.");
       return;
@@ -72,6 +81,9 @@ export default function UploadPage() {
 
       setProgress(100);
       setStatus("Video uploaded successfully!");
+      setSucceeded(true);
+      setUploadedId(result.video?.id ?? null);
+      mutate("/api/videos");
 
       setFile(null);
       setTitle("");
@@ -90,112 +102,100 @@ export default function UploadPage() {
     }
   }
 
+  const fieldClass =
+    "w-full rounded-xl border border-border bg-surface px-4 py-3 text-sm text-foreground placeholder:text-muted outline-none transition focus:border-foreground/30 focus:bg-surface-raised disabled:opacity-60";
+
   return (
-    <main className="min-h-screen bg-black text-white p-8">
-      <div className="max-w-2xl mx-auto">
-        <h1 className="text-3xl font-bold mb-8">
-          Upload Video
-        </h1>
+    <main className="mx-auto max-w-6xl px-4 pb-20 pt-8 md:px-8 md:pt-12">
+      <div className="animate-fade-up">
+        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-accent">Creator studio</p>
+        <h1 className="mt-2 text-balance text-3xl font-semibold tracking-tight md:text-4xl">Upload a video</h1>
+        <p className="mt-2 max-w-xl text-pretty text-muted">
+          Share your work with the world. Large files are uploaded in parts directly to secure storage.
+        </p>
+      </div>
 
-        <div className="space-y-5">
-          <div>
-            <label className="block mb-2">
-              Video
+      <form
+        onSubmit={(event) => {
+          event.preventDefault();
+          handleUpload();
+        }}
+        className="mt-10 grid animate-fade-up gap-8 [animation-delay:80ms] lg:grid-cols-[1.1fr_1fr]"
+      >
+        <div className="flex flex-col gap-4">
+          <UploadDropzone file={file} disabled={uploading} onFileChange={setFile} />
+          <UploadStatus
+            uploading={uploading}
+            progress={progress}
+            status={status}
+            succeeded={succeeded}
+            uploadedId={uploadedId}
+          />
+        </div>
+
+        <div className="flex flex-col gap-5 rounded-3xl bg-surface/60 p-6 ring-1 ring-border">
+          <div className="flex flex-col gap-2">
+            <label htmlFor="title" className="text-sm font-medium">
+              Title <span className="text-accent">*</span>
             </label>
-
             <input
-              type="file"
-              accept="video/*"
-              disabled={uploading}
-              onChange={(e) =>
-                setFile(e.target.files?.[0] || null)
-              }
-              className="w-full"
-            />
-          </div>
-
-          <div>
-            <label className="block mb-2">
-              Title
-            </label>
-
-            <input
+              id="title"
               type="text"
               value={title}
               disabled={uploading}
+              maxLength={120}
               onChange={(e) => setTitle(e.target.value)}
-              className="w-full p-3 rounded bg-zinc-900 border border-zinc-700"
-              placeholder="Video title"
+              className={fieldClass}
+              placeholder="Give your video a memorable title"
             />
+            <p className="text-right text-xs tabular-nums text-muted">{title.length}/120</p>
           </div>
 
-          <div>
-            <label className="block mb-2">
-              Category
-            </label>
+          <fieldset className="flex flex-col gap-2" disabled={uploading}>
+            <legend className="mb-2 text-sm font-medium">Category</legend>
+            <div className="flex flex-wrap gap-2">
+              {UPLOAD_CATEGORIES.map((option) => (
+                <label
+                  key={option}
+                  className="cursor-pointer rounded-full bg-surface-raised px-4 py-2 text-sm font-medium text-foreground/80 transition hover:bg-zinc-700 has-[:checked]:bg-foreground has-[:checked]:text-background has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-accent"
+                >
+                  <input
+                    type="radio"
+                    name="category"
+                    value={option}
+                    checked={category === option}
+                    onChange={(e) => setCategory(e.target.value)}
+                    className="sr-only"
+                  />
+                  {option}
+                </label>
+              ))}
+            </div>
+          </fieldset>
 
-            <select
-              value={category}
-              disabled={uploading}
-              onChange={(e) => setCategory(e.target.value)}
-              className="w-full p-3 rounded bg-zinc-900 border border-zinc-700"
-            >
-              <option>General</option>
-              <option>Entertainment</option>
-              <option>Education</option>
-              <option>Technology</option>
-              <option>Sports</option>
-              <option>News</option>
-              <option>Music</option>
-            </select>
-          </div>
-
-          <div>
-            <label className="block mb-2">
+          <div className="flex flex-col gap-2">
+            <label htmlFor="description" className="text-sm font-medium">
               Description
             </label>
-
             <textarea
+              id="description"
               value={description}
               disabled={uploading}
-              onChange={(e) =>
-                setDescription(e.target.value)
-              }
-              className="w-full p-3 rounded bg-zinc-900 border border-zinc-700 min-h-32"
-              placeholder="Video description"
+              onChange={(e) => setDescription(e.target.value)}
+              className={`${fieldClass} min-h-36 resize-y`}
+              placeholder="Tell viewers what your video is about"
             />
           </div>
 
-          {uploading && (
-            <div>
-              <div className="w-full h-3 bg-zinc-800 rounded overflow-hidden">
-                <div
-                  className="h-full bg-blue-500 transition-all"
-                  style={{ width: `${progress}%` }}
-                />
-              </div>
-
-              <p className="mt-2 text-sm text-zinc-400">
-                {progress}%
-              </p>
-            </div>
-          )}
-
           <button
-            onClick={handleUpload}
+            type="submit"
             disabled={uploading}
-            className="w-full p-4 rounded bg-blue-600 hover:bg-blue-700 disabled:bg-zinc-700 font-semibold"
+            className="mt-2 flex h-12 w-full items-center justify-center gap-2 rounded-full bg-accent text-sm font-semibold text-white transition hover:bg-accent-hover active:scale-[0.99] disabled:cursor-not-allowed disabled:bg-surface-raised disabled:text-muted"
           >
-            {uploading ? "Uploading..." : "Upload Video"}
+            {uploading ? `Uploading ${progress}%` : "Publish video"}
           </button>
-
-          {status && (
-            <p className="text-sm text-zinc-300">
-              {status}
-            </p>
-          )}
         </div>
-      </div>
+      </form>
     </main>
   );
 }

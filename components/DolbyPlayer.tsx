@@ -47,7 +47,7 @@ export default function DolbyPlayer({
       playsInline
       preload="metadata"
       poster={poster}
-      className="w-full rounded-xl bg-black"
+      className="aspect-video w-full bg-black"
     >
       Your browser does not support this video.
     </video>
